@@ -1,2 +1,2 @@
 # ubjsonconverter
-A helper library to convert Universal Binary JSON (ubjson) to equivalent google JSON value (element,array or object)
+A helper library to convert UBValue of the Universal Binary JSON library UBJSON to/from its equivalent JsonElement of the google GSON library.

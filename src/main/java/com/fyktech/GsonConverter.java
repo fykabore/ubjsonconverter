@@ -119,12 +119,4 @@ public class GsonConverter {
         }
         throw new IllegalStateException("Format unknown: cannot convert " + ubValue + " to jsonElement");
     }
-
-    public static String toJsonString(UBValue ubValue) {
-        return toJson(ubValue).toString();
-    }
-
-    public static String toJsonString(JsonElement jsonElement) {
-        return jsonElement.toString();
-    }
 }
