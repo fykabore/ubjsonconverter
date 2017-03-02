@@ -1,5 +1,6 @@
 package com.fyktech;
 
+import com.devsmart.ubjson.UBArray;
 import com.devsmart.ubjson.UBValue;
 import com.devsmart.ubjson.UBValueFactory;
 import com.google.gson.JsonArray;
@@ -19,7 +20,7 @@ import java.util.TreeMap;
 
 public class GsonConverter {
 
-    public UBValue fromJson(JsonElement jsonElement) {
+    public static UBValue fromJson(JsonElement jsonElement) {
         if (jsonElement == null) {
             return null;
         }
@@ -77,7 +78,7 @@ public class GsonConverter {
         throw new IllegalStateException("Format unknown: cannot convert " + jsonElement + " to UBValue");
     }
 
-    public JsonElement toJson(UBValue ubValue) {
+    public static JsonElement toJson(UBValue ubValue) {
         if (ubValue == null) {
             return null;
         }
@@ -108,14 +109,22 @@ public class GsonConverter {
             return jsonObject;
         }
 
+        if (ubValue.isArray()) {
+            UBArray ubArray = ubValue.asArray();
+            JsonArray jsonArray = new JsonArray();
+            for (int i = 0; i < ubArray.size(); i++) {
+                jsonArray.add(toJson(ubArray.get(i)));
+            }
+            return jsonArray;
+        }
         throw new IllegalStateException("Format unknown: cannot convert " + ubValue + " to jsonElement");
     }
 
-    public String toJsonString(UBValue ubValue) {
+    public static String toJsonString(UBValue ubValue) {
         return toJson(ubValue).toString();
     }
 
-    public String toJsonString(JsonElement jsonElement) {
+    public static String toJsonString(JsonElement jsonElement) {
         return jsonElement.toString();
     }
 }
