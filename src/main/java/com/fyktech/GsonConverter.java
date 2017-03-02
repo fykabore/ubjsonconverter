@@ -1,10 +1,10 @@
 package com.fyktech;
+
 import com.devsmart.ubjson.UBValue;
 import com.devsmart.ubjson.UBValueFactory;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
@@ -18,65 +18,104 @@ import java.util.Set;
 import java.util.TreeMap;
 
 public class GsonConverter {
-    private Gson mGson;
-    public GsonConverter(){
-        mGson = new GsonBuilder().serializeNulls().setLenient().create();
-    }
 
-    public UBValue fromJson(JsonElement jsonElement){
-       if(jsonElement==null){
+    public UBValue fromJson(JsonElement jsonElement) {
+        if (jsonElement == null) {
             return null;
         }
-        if(jsonElement.isJsonNull()){
+        if (jsonElement.isJsonNull()) {
             return UBValueFactory.createNull();
         }
-        if(jsonElement.isJsonPrimitive()){
-            JsonPrimitive jsonPrimitive = (JsonPrimitive)jsonElement;
-            if(jsonPrimitive.isBoolean()){
+        if (jsonElement.isJsonPrimitive()) {
+            JsonPrimitive jsonPrimitive = (JsonPrimitive) jsonElement;
+            if (jsonPrimitive.isBoolean()) {
                 return UBValueFactory.createBool(jsonPrimitive.getAsBoolean());
             }
-            if(jsonPrimitive.isString()){
+            if (jsonPrimitive.isString()) {
                 return UBValueFactory.createString(jsonPrimitive.getAsString());
             }
 
-            if(jsonPrimitive.isNumber()){
+            if (jsonPrimitive.isNumber()) {
                 Number number = jsonPrimitive.getAsNumber();
-                if(number instanceof BigInteger || number instanceof BigDecimal){
+                if (number instanceof BigInteger || number instanceof BigDecimal) {
                     throw new IllegalStateException("Big Integer and BigDecimal not supported");
                 }
-                if(number instanceof Long || number instanceof Integer
-                        || number instanceof Short || number instanceof Byte){
+                if (number instanceof Long || number instanceof Integer
+                        || number instanceof Short || number instanceof Byte) {
                     return UBValueFactory.createInt(number.longValue());
                 }
 
-                if(number instanceof Float){
+                if (number instanceof Float) {
                     return UBValueFactory.createFloat32(number.floatValue());
                 }
-                if(number instanceof Double){
+                if (number instanceof Double) {
                     return UBValueFactory.createFloat64(number.doubleValue());
                 }
             }
 
         }
-        if(jsonElement.isJsonObject()){
+        if (jsonElement.isJsonObject()) {
             JsonObject jsonObject = jsonElement.getAsJsonObject();
             Set<Map.Entry<String, JsonElement>> entrySet = jsonObject.entrySet();
-            Map<String,UBValue> tempMap = new TreeMap();
-            for(Map.Entry<String,JsonElement> entry:entrySet){
-                tempMap.put(entry.getKey(),fromJson(entry.getValue()));
+            Map<String, UBValue> tempMap = new TreeMap();
+            for (Map.Entry<String, JsonElement> entry : entrySet) {
+                tempMap.put(entry.getKey(), fromJson(entry.getValue()));
             }
             return UBValueFactory.createObject(tempMap);
         }
 
-        if(jsonElement.isJsonArray()){
+        if (jsonElement.isJsonArray()) {
             JsonArray jsonArray = jsonElement.getAsJsonArray();
             Iterator<JsonElement> iterator = jsonArray.iterator();
             List<UBValue> ubValueList = new ArrayList<UBValue>();
-            while (iterator.hasNext()){
+            while (iterator.hasNext()) {
                 ubValueList.add(fromJson(iterator.next()));
             }
             return UBValueFactory.createArray(ubValueList);
         }
-        return  null;
+
+        throw new IllegalStateException("Format unknown: cannot convert " + jsonElement + " to UBValue");
+    }
+
+    public JsonElement toJson(UBValue ubValue) {
+        if (ubValue == null) {
+            return null;
+        }
+        if (ubValue.isNull()) {
+            return JsonNull.INSTANCE;
+        }
+
+
+        if (ubValue.isBool()) {
+            return new JsonPrimitive(ubValue.asBool());
+        }
+        if (ubValue.isString()) {
+            return new JsonPrimitive(ubValue.asString());
+        }
+
+        if (ubValue.isNumber()) {
+            if (ubValue.isInteger()) {
+                return new JsonPrimitive(ubValue.asInt());
+            }
+            return new JsonPrimitive(ubValue.asFloat64());
+        }
+
+        if (ubValue.isObject()) {
+            JsonObject jsonObject = new JsonObject();
+            for (Map.Entry<String, UBValue> entry : ubValue.asObject().entrySet()) {
+                jsonObject.add(entry.getKey(), toJson(entry.getValue()));
+            }
+            return jsonObject;
+        }
+
+        throw new IllegalStateException("Format unknown: cannot convert " + ubValue + " to jsonElement");
+    }
+
+    public String toJsonString(UBValue ubValue) {
+        return toJson(ubValue).toString();
+    }
+
+    public String toJsonString(JsonElement jsonElement) {
+        return jsonElement.toString();
     }
 }
